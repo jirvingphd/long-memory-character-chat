@@ -3,7 +3,7 @@ from streamlit.web.server.websocket_headers import _get_websocket_headers
 from aiagent import AIAgent
 import os
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title='Chat with a Character', page_icon='💬', initial_sidebar_state='expanded' )
 
 # get the websocket headers and session id
 try:
@@ -105,12 +105,13 @@ def format_model_label(model):
 # Set the title
 st.title('Chat with a Character!')
 
+st.markdown(""">***This app allows you to chat with a character.  You can set the character description, save and load conversations, and clear the conversation history.)
+            This character will have a very long memory, and should remember details about you conversation even after many messages.  It's not perfect, but better than most!
+            You can set the temperature and top_p through 'creativity' and 'freedom' respectively.  You can also choose from one of 3 base models.  These can be changed on the fly.***""")
 
 with st.expander('Disclaimer', expanded=True):
 # Disclaimer
-    st.write('''This app allows you to chat with a character.  You can set the character description, save and load conversations, and clear the conversation history.
-            This character will have a very long memory, and should remember details about you conversation even after many messages.  It's not perfect, but better than most!
-            You can set the temperature and top_p through 'creativity' and 'freedom' respectively.  You can also choose from one of 3 base models.  These can be changed on the fly.
+    st.write('''
             \n * All responses are for entertainment only.  
 
             \n * The character is not a real person and does not have real emotions or thoughts.
@@ -230,15 +231,15 @@ with st.container(border=True):
                         frequency_penalty=frequency_penalty,
                         presence_penalty=presence_penalty)
 
-# add a donate button
-col1, col2 = st.columns(2)             
+# # add a donate button
+# col1, col2 = st.columns(2)             
 
-with col1:
-    st.markdown(f':green[**Cost of this conversation so far is: ${st.session_state["agent"].total_cost:.5f}**]')
+# with col1:
+#     st.markdown(f':green[**Cost of this conversation so far is: ${st.session_state["agent"].total_cost:.5f}**]')
 
-with col2:
-    st.link_button('😊 Please Donate to support my site', 'https://paypal.me/caellwyn?country.x=US&locale.x=en_US',
-               type='primary', help='Please consider donating to support the site.  Thank you!',)
+# with col2:
+#     st.link_button('😊 Please Donate to support my site', 'https://paypal.me/caellwyn?country.x=US&locale.x=en_US',
+#                type='primary', help='Please consider donating to support the site.  Thank you!',)
             
 # display the conversation history
 with st.container(height=200):
@@ -285,22 +286,51 @@ with st.container(border=True):
                     load_character(pkl)
                     st.rerun()
 
-# write descriptive statistics on the sidebar
-st.sidebar.divider()
-st.sidebar.markdown('## Conversation Statistics')
+
+
+with st.sidebar.container(border=True):
+    #  add a donate button
+    st.markdown(f'>😊 Please Donate to support my site🙏')
+    
+    col1, col2 = st.columns([.7,.3])             
+
+    with col1:
+        st.markdown(f':green[**Cost of this conversation: ${st.session_state["agent"].total_cost:.5f}**]')    
+
+    with col2:
+        st.markdown('')
+        st.link_button('Donate', 'https://paypal.me/caellwyn?country.x=US&locale.x=en_US',
+                type='primary', help='Please consider donating to support the site.  Thank you!',)
+    
+st.sidebar.markdown('## Conversation Statistics')            
 
 with st.sidebar.container(border=False):
+    #  add a donate button
+    # col1, col2 = st.columns(2)             
+
+    # # with col1:
+    # st.markdown(f':green[**Cost of this conversation so far is: ${st.session_state["agent"].total_cost:.5f}**]')
+
+    # # with col2:
+    # st.link_button('😊 Please Donate to support my site', 'https://paypal.me/caellwyn?country.x=US&locale.x=en_US',
+    #             type='primary', help='Please consider donating to support the site.  Thank you!',)
+    
+
+    # write descriptive statistics on the sidebar
+    # st.sidebar.divider()
+    
     rows = []
     # rows.append("| Statistics | Value |")
     
     # Create each row as a string with f-strings
     rows.append(f"| Total current memory tokens | {st.session_state['agent'].current_memory_tokens} |")
     rows.append("|---:|:---:|")
-    rows.append(f"| Total cost of this conversation is: | {st.session_state['agent'].total_cost} |")
     rows.append(f"| Total tokens sent is: | {st.session_state['agent'].total_tokens} |")
     rows.append(f"| Average number of tokens per interaction is: | {st.session_state['agent'].average_tokens} |")
     rows.append(f"| Average cost per interaction is: | {st.session_state['agent'].average_cost} |")
     rows.append(f"| Total number of interactions is: | {len(st.session_state['agent'].chat_history) // 2} |")
+    rows.append(f"| Total cost of this conversation is: | {st.session_state['agent'].total_cost} |")
+
     # Combine all rows with a newline and pipe delimiter
     table_content = "\n".join(rows)
 
