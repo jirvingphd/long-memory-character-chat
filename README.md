@@ -1,6 +1,17 @@
 # Role-playing Chatbot for Long Conversations and Adventures
  A character chat with integrated medium and long-term memory
 
+___
+JMI Notes re: venv
+
+```bash
+conda deactivate
+python -m venv app-env
+source app-env/bin/activate
+pip install -r requirements.txt
+```
+___
+
  [Check it out here!](https://long-memory-character-chat.streamlit.app/)
 
 # Problem Statements
