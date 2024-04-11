@@ -137,7 +137,7 @@ with st.sidebar:
 
 
     
-    with st.expander("Select a Model"):#border=True):
+    with st.expander("**Select a Model** *(default is gemini-pro*)"):#border=True):
         # set the model
         # st.markdown('### Choose a model')
         st.radio("Models",  #horizontal=False,
@@ -164,7 +164,7 @@ with st.sidebar:
                 st.session_state['nsfw'] = False
                 st.warning('The NSFW password is incorrect.  Please enter the correct password to enable unfiltered mode.')
                 
-    with st.expander("Model Parameters"):#border=True):
+    with st.expander("**Model Parameters**"):#border=True):
         # set the temperature for the model
         temperature = st.slider('Temperature: gives the model more freedom to be creative', min_value=0.0, max_value=1.0, step=0.05, value=0.0)
         top_p = st.slider('Top P: allows the model to choose from a larger selection of possible responses', min_value=0.0, step=.05, max_value=1.0, value=0.0)
@@ -186,50 +186,67 @@ if 'pickled_agent' not in st.session_state:
     st.session_state['pickled_agent'] = None
 
 # Create the character settings
-with st.container(border=True):
-    st.markdown('## Create Your Character')
-    st.markdown('''This can be changed at any time, and the character will remember the conversation.
-                \n Other than the first sentence, address the description to the character''')
-    # set the character with a text input and button
-    st.text_area('The character is...', value=st.session_state['agent'].character,
-                max_chars=500, help='Describe the character', key='character', height=100,
-                on_change=set_character)
-    
+st.markdown('## Create Your Character')
+st.markdown('''>This can be changed at any time, and the character will remember the conversation.  Other than the first sentence, address the description to the character''')
 
+with st.container(border=True):
+
+    st.markdown('#### Character Info')
     col1, col2 = st.columns(2)
     with col1:
-        # user name
-        st.text_input('Your Name', value=st.session_state['agent'].user_name, 
-                      max_chars=30, key='user_name', on_change=set_user_name)
+        
 
-    with col2:
-        # character name
+        # user name
         st.text_input('The Character\' Name', value=st.session_state['agent'].character_name, 
                       max_chars=30, key='character_name', on_change=set_character_name)
 
+    # set the character with a text input and button
+        st.text_area('The character is...', value=st.session_state['agent'].character,
+                max_chars=500, help='Describe the character', key='character', height=100,
+                on_change=set_character)
+
+
+
+    with col2:
+        # character name
+        # set location of the conversation.
+        st.text_input('Your Name (what the character will call you).', value=st.session_state['agent'].user_name, 
+                      max_chars=30, key='user_name', on_change=set_user_name)
+        st.markdown('##### Conversation Location')
+        # st.markdown('Feel free to change the location during the course of the conversation as appropriate.')
+
+        # set the location of the conversation
+        location = st.text_input('The current location or situation is...', value=st.session_state['agent'].location,
+                            max_chars=50, help='Describe the location of the conversation. Feel free to change the location during the course of the conversation as appropriate.', key='location',
+                            on_change=set_location)
 
 
 # Create chat input
-with st.container(border=True):
-    st.markdown('## Chat with your Character')
+st.markdown('## Chat with your Character')
+
+chat_container = st.container(border=True)
+output_container = chat_container.container()
+prompt = chat_container.chat_input("Your message here", max_chars=500, on_submit=save_character)
+with output_container:
+    
 
     # set location of the conversation.
-    st.markdown('##### Location and Messages')
-    st.markdown('Feel free to change the location during the course of the conversation as appropriate.')
+    # st.markdown('##### Location and Messages')
+    # st.markdown('Feel free to change the location during the course of the conversation as appropriate.')
 
-    # set the location of the conversation
-    location = st.text_input('The current location or situation is...', value=st.session_state['agent'].location,
-                        max_chars=50, help='Describe the location of the conversation', key='location',
-                        on_change=set_location)
+    # # set the location of the conversation
+    # location = st.text_input('The current location or situation is...', value=st.session_state['agent'].location,
+    #                     max_chars=50, help='Describe the location of the conversation', key='location',
+    #                     on_change=set_location)
 
     # Chat input
-    if prompt := st.chat_input("Your message here", max_chars=500, on_submit=save_character):
-        with st.spinner("Thinking..."):
-            query_agent(prompt, 
-                        temperature=temperature,
-                        top_p=top_p,
-                        frequency_penalty=frequency_penalty,
-                        presence_penalty=presence_penalty)
+    if prompt :#= st.chat_input("Your message here", max_chars=500, on_submit=save_character):
+        # with st.spinner("Thinking..."):
+        response = query_agent(prompt, 
+                    temperature=temperature,
+                    top_p=top_p,
+                    frequency_penalty=frequency_penalty,
+                    presence_penalty=presence_penalty)
 
 # # add a donate button
 # col1, col2 = st.columns(2)             
@@ -241,14 +258,24 @@ with st.container(border=True):
 #     st.link_button('😊 Please Donate to support my site', 'https://paypal.me/caellwyn?country.x=US&locale.x=en_US',
 #                type='primary', help='Please consider donating to support the site.  Thank you!',)
             
+            
+def fake_streaming(response):
+    import time
+    for word in response.split(" "):
+        yield word + " "
+        time.sleep(.05)		
+        
 # display the conversation history
-with st.container(height=200):
-    for message in reversed(st.session_state["agent"].chat_history):
-        with st.chat_message(message['role']):
-            if message['role'] == 'user':
-                st.markdown(message['content'].replace(st.session_state['agent'].prefix, ''))
-            else:
-                st.markdown(message['content'])
+with output_container:#st.container(height=200):
+
+    for message in st.session_state["agent"].chat_history:
+        # with st.chat_message(message['role']):
+        if message['role'] == 'user':
+            # st.markdown(message['content'].replace(st.session_state['agent'].prefix, ''))
+            st.chat_message('user', avatar='💬').write(message['content'])
+        elif message['role'] == 'assistant':
+            st.chat_message('ai', avatar='👤').write(message['content'])#.write_stream(fake_streaming(message['content']), )
+                # st.markdown(message['content'])
 
 with st.container(border=True):
     st.markdown('#### Reset, Save, Download, and Upload Coversations')
@@ -325,11 +352,11 @@ with st.sidebar.container(border=False):
     # Create each row as a string with f-strings
     rows.append(f"| Total current memory tokens | {st.session_state['agent'].current_memory_tokens} |")
     rows.append("|---:|:---:|")
-    rows.append(f"| Total tokens sent is: | {st.session_state['agent'].total_tokens} |")
-    rows.append(f"| Average number of tokens per interaction is: | {st.session_state['agent'].average_tokens} |")
-    rows.append(f"| Average cost per interaction is: | {st.session_state['agent'].average_cost} |")
-    rows.append(f"| Total number of interactions is: | {len(st.session_state['agent'].chat_history) // 2} |")
-    rows.append(f"| Total cost of this conversation is: | {st.session_state['agent'].total_cost} |")
+    rows.append(f"| Total tokens sent: | {st.session_state['agent'].total_tokens} |")
+    rows.append(f"| Average tokens per interaction: | {st.session_state['agent'].average_tokens} |")
+    rows.append(f"| Average cost per interaction: | {st.session_state['agent'].average_cost} |")
+    rows.append(f"| Total # of interactions: | {len(st.session_state['agent'].chat_history) // 2} |")
+    rows.append(f"| Total cost of this conversation: | {st.session_state['agent'].total_cost} |")
 
     # Combine all rows with a newline and pipe delimiter
     table_content = "\n".join(rows)
